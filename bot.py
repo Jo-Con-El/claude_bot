@@ -86,7 +86,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• /help — Esto mismo"
     )
 
-async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def cmd_reset(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
     if not is_allowed(user_id): return
     history.pop(user_id, None)
@@ -103,7 +103,7 @@ async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         f"Sí, sigo aquí. Funcionando. No me preguntéis cómo me siento."
     )
 
-async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     if not is_allowed(user.id):
         await update.message.reply_text("⛔ No tienes acceso.")
