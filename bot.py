@@ -128,12 +128,15 @@ def main():
     app.add_handler(CommandHandler("help", cmd_start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Guardar al recibir SIGINT (Ctrl+C) o SIGTERM (systemd stop, etc.)
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        signal.signal(sig, lambda s, f: (save_history(), exit(0)))
-
     logger.info("Bot en marcha.")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    app.run_polling(
+        allowed_updates=Update.ALL_TYPES,
+        stop_signals=(signal.SIGINT, signal.SIGTERM),  # ya es el default, pero explícito
+    )
+
+    # Esto se ejecuta cuando run_polling() termina limpiamente
+    save_history()
+    logger.info("Historial guardado al salir.")
 
 if __name__ == "__main__":
     main()
