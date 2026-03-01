@@ -10,7 +10,10 @@ _users = os.getenv("ALLOWED_USERS", "")
 ALLOWED_USERS: list[int] = [int(u) for u in _users.split(",") if u.strip()]
 
 # Número máximo de intercambios (pares user/assistant) que se mantienen en memoria.
-MAX_HISTORY = 40
+MAX_HISTORY: int = 40
+
+# Fichero donde se persiste el estado.
+HISTORY_FILE: str = "history.json"
 
 # Instrucciones de sistema para Claude.
 SYSTEM_PROMPT = """
