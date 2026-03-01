@@ -64,13 +64,14 @@ def add_message(user_id: int, role: str, content: str) -> None:
     if len(msgs) > MAX_HISTORY * 2:
         history[user_id] = msgs[-(MAX_HISTORY * 2):]
 
-def ask_claude(user_id: int, user_text: str) -> str:
+def ask_claude(user_id: int, user_text: str, first_name: str = "alguien") -> str:
     add_message(user_id, "user", user_text)
     try:
+        system_with_name = SYSTEM_PROMPT + f"\n\nEstás hablando con {first_name}."
         response = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=2048,
-            system=SYSTEM_PROMPT,
+            system=system_with_name,
             messages=get_context(user_id),
         )
         reply = response.content[0].text
@@ -154,7 +155,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         action=constants.ChatAction.TYPING
     )
     try:
-        reply = await asyncio.to_thread(ask_claude, user.id, update.message.text)
+        reply = await asyncio.to_thread(ask_claude, user.id, update.message.text, user.first_name)
         chunks = split_message(reply)
         for chunk in chunks:
             await update.message.reply_text(chunk)

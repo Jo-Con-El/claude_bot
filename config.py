@@ -13,7 +13,7 @@ ALLOWED_USERS: list[int] = [int(u) for u in _users.split(",") if u.strip()]
 MAX_HISTORY: int = 1000
 
 # Ventana de contexto inicial (pares user/assistant).
-DEFAULT_HISTORY_LIMIT: int = 20
+DEFAULT_HISTORY_LIMIT: int = 40
 
 # Fichero donde se persiste el estado.
 HISTORY_FILE: str = "history.json"
