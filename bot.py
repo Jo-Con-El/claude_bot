@@ -108,11 +108,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if not is_allowed(user.id):
         await update.message.reply_text("⛔ No tienes acceso.")
         return
-    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=constants.ChatAction.TYPING)
+    await context.bot.send_chat_action(
+        chat_id=update.effective_chat.id,
+        action=constants.ChatAction.TYPING
+    )
     try:
         reply = await asyncio.to_thread(ask_claude, user.id, update.message.text)
-        for chunk in split_message(reply):
+        chunks = split_message(reply)
+        for chunk in chunks:
             await update.message.reply_text(chunk)
+            if len(chunks) > 1:
+                await asyncio.sleep(0.5)
     except Exception as e:
         await update.message.reply_text(f"❌ Error: {e}")
 
