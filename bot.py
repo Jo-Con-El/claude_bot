@@ -111,7 +111,7 @@ async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=constants.ChatAction.TYPING)
     try:
         reply = await asyncio.to_thread(ask_claude, user.id, update.message.text)
-for chunk in split_message(reply):
+        for chunk in split_message(reply):
             await update.message.reply_text(chunk)
     except Exception as e:
         await update.message.reply_text(f"❌ Error: {e}")
