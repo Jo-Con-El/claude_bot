@@ -9,8 +9,11 @@ ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
 _users = os.getenv("ALLOWED_USERS", "")
 ALLOWED_USERS: list[int] = [int(u) for u in _users.split(",") if u.strip()]
 
-# Número máximo de intercambios (pares user/assistant) que se mantienen en memoria.
-MAX_HISTORY: int = 40
+# Número máximo de intercambios que se guardan en memoria (buffer absoluto).
+MAX_HISTORY: int = 1000
+
+# Ventana de contexto inicial (pares user/assistant).
+DEFAULT_HISTORY_LIMIT: int = 20
 
 # Fichero donde se persiste el estado.
 HISTORY_FILE: str = "history.json"

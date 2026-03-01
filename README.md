@@ -30,12 +30,13 @@ python bot.py
 
 ## Comandos del bot
 
-| Comando   | Función                                        |
-|-----------|------------------------------------------------|
-| `/start`  | Bienvenida                                     |
-| `/reset`  | Borra el historial de conversación             |
-| `/status` | Muestra mensajes en memoria y modelo activo    |
-| `/help`   | Ayuda                                          |
+| Comando    | Función                                        |
+|------------|------------------------------------------------|
+| `/start`   | Bienvenida                                     |
+| `/reset`   | Borra el historial de conversación             |
+| `/limit N` | Cambia la ventana de contexto                  |
+| `/status`  | Muestra mensajes en memoria y modelo activo    |
+| `/help`    | Ayuda                                          |
 
 ---
 
