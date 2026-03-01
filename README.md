@@ -8,18 +8,19 @@ Mantiene historial de conversación por usuario y soporta lista blanca de acceso
 ## Instalación
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv /src/claude-bot (o cualquier otro directorio)
+source /src/claude-bot/bin/activate
 pip install -r requirements.txt
 ```
 
 ## Configuración
 
-Edita `config.py` y rellena:
+Renombra `.env.example` a `.env` y rellena:
 
 - `TELEGRAM_TOKEN` → obtenlo hablando con @BotFather en Telegram (`/newbot`)
 - `ANTHROPIC_API_KEY` → en console.anthropic.com → API Keys
-- `ALLOWED_USERS` → tu user_id (pregúntale a @userinfobot). Déjalo vacío `[]` para acceso libre.
+- `ALLOWED_USERS` → tu user_id (pregúntale a @userinfobot) y el de los demás,
+  separado por comas sin espacios. Déjalo vacío para acceso libre.
 
 ## Arrancar
 
@@ -80,7 +81,8 @@ Para reducir costes, cambia el modelo en `bot.py` a `claude-haiku-4-5-20251001`.
 ```
 claude-telegram-bot/
 ├── bot.py           # Lógica principal
-├── config.py        # Credenciales y ajustes
+├── config.py        # Configuración general, personalidad y demás
+├── .env             # Credenciales personales
 ├── requirements.txt # Dependencias
 └── README.md        # Este archivo
 ```
