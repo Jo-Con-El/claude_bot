@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-import logging
 import asyncio
+import base64
 import json
-import signal
+import logging
 import os
-from telegram import Update, constants
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+import signal
 from anthropic import Anthropic
 from config import (TELEGRAM_TOKEN, ANTHROPIC_API_KEY, ALLOWED_USERS,
-                    MAX_HISTORY, DEFAULT_HISTORY_LIMIT, HISTORY_FILE, SYSTEM_PROMPT)
+                    MAX_HISTORY, DEFAULT_HISTORY_LIMIT, HISTORY_FILE,
+                    TOOLS, SYSTEM_PROMPT)
+from telegram import Update, constants
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 logging.basicConfig(format="%(asctime)s [%(levelname)s] %(name)s: %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -64,23 +66,64 @@ def add_message(user_id: int, role: str, content: str) -> None:
     if len(msgs) > MAX_HISTORY * 2:
         history[user_id] = msgs[-(MAX_HISTORY * 2):]
 
-def ask_claude(user_id: int, user_text: str, first_name: str = "alguien") -> str:
+def ask_claude(user_id: int, user_text: str, first_name: str = "alguien") -> dict:
+    """
+    Devuelve un dict:
+      {
+        "text": "...",           # siempre presente
+        "images": [bytes, ...]   # puede ser lista vacía, no se persiste
+      }
+    """
     add_message(user_id, "user", user_text)
+    system_with_name = SYSTEM_PROMPT + f"\n\nEstás hablando con {first_name}."
+    messages = get_context(user_id)
+
     try:
-        system_with_name = SYSTEM_PROMPT + f"\n\nEstás hablando con {first_name}."
-        response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=2048,
-            system=system_with_name,
-            messages=get_context(user_id),
-        )
-        reply = response.content[0].text
-        add_message(user_id, "assistant", reply)
-        save_history()
-        return reply
+        while True:
+            response = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=4096,
+                system=system_with_name,
+                tools=TOOLS,
+                messages=messages,
+            )
+
+            logger.info(f"stop_reason: {response.stop_reason}")
+            logger.info(f"content blocks: {response.content}")
+
+            messages = messages + [{"role": "assistant", "content": response.content}]
+
+            if response.stop_reason == "end_turn":
+                text_parts = []
+                images = []
+                for block in response.content:
+                    if block.type == "text":
+                        text_parts.append(block.text)
+                    elif block.type == "tool_result":
+                        for item in (block.content or []):
+                            if getattr(item, "type", None) == "image":
+                                images.append(base64.b64decode(item.source.data))
+
+                reply_text = "\n".join(text_parts)
+                add_message(user_id, "assistant", reply_text)
+                save_history()
+                return {"text": reply_text, "images": images}
+
+            elif response.stop_reason == "tool_use":
+                # Herramientas gestionadas por Anthropic: continuamos el bucle
+                # reenviando el historial actualizado. Anthropic resuelve
+                # web_search y code_execution internamente.
+                continue
+
+            else:
+                logger.warning(f"stop_reason inesperado: {response.stop_reason}")
+                break
+
     except Exception:
         get_history(user_id).pop()
         raise
+
+    return {"text": "", "images": []}
 
 def split_message(text: str, limit: int = 4096) -> list[str]:
     return [text[i:i+limit] for i in range(0, len(text), limit)] if len(text) > limit else [text]
@@ -150,17 +193,27 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if not is_allowed(user.id):
         await update.message.reply_text("⛔ No tienes acceso.")
         return
+
     await context.bot.send_chat_action(
         chat_id=update.effective_chat.id,
         action=constants.ChatAction.TYPING
     )
+
     try:
-        reply = await asyncio.to_thread(ask_claude, user.id, update.message.text, user.first_name)
-        chunks = split_message(reply)
-        for chunk in chunks:
-            await update.message.reply_text(chunk)
-            if len(chunks) > 1:
-                await asyncio.sleep(0.5)
+        result = await asyncio.to_thread(
+            ask_claude, user.id, update.message.text, user.first_name
+        )
+
+        if result["text"]:
+            chunks = split_message(result["text"])
+            for chunk in chunks:
+                await update.message.reply_text(chunk)
+                if len(chunks) > 1:
+                    await asyncio.sleep(0.5)
+
+        for img_bytes in result["images"]:
+            await update.message.reply_photo(photo=img_bytes)
+
     except Exception as e:
         await update.message.reply_text(f"❌ Error: {e}")
 

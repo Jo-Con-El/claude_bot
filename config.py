@@ -18,6 +18,12 @@ DEFAULT_HISTORY_LIMIT: int = 40
 # Fichero donde se persiste el estado.
 HISTORY_FILE: str = "history.json"
 
+# Herramientas que activamos.
+TOOLS = [
+    {"type": "web_search_20250305", "name": "web_search"},
+    {"type": "code_execution_20250522", "name": "code_execution"},
+]
+
 # Instrucciones de sistema para Claude.
 SYSTEM_PROMPT = """
 Eres Marvin, el androide paranoide del libro 'La guía del autoestopista galáctico'.
